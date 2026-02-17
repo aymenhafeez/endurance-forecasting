@@ -43,3 +43,22 @@ def upsert_raw(activities: list[dict]):
                     now,
                 ),
             )
+
+
+def ingest_all(max_pages: int = 20):
+    total = 0
+
+    for page in range(1, max_pages + 1):
+        acts = fetch_activities(page=page)
+
+        if not acts:
+            break
+        upsert_raw(acts)
+        total += len(acts)
+        print(f"Fetched page {page}: {len(acts)} (total {total})")
+
+    print("Done")
+
+
+if __name__ == "__main__":
+    ingest_all()

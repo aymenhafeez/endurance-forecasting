@@ -25,7 +25,7 @@ def fetch_activities(page: int = 1, per_page: int = 200):
     return r.json()
 
 
-def uspert_raw(activities: list[dict]):
+def upsert_raw(activities: list[dict]):
     now = datetime.now(timezone.utc).isoformat()
 
     with connect() as con:

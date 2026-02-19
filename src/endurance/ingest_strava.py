@@ -39,19 +39,31 @@ def refresh_access_token() -> str:
 
 
 def fetch_activities(page: int = 1, per_page: int = 200):
-    if not CFG.strava_access_token:
-        raise RuntimeError("Set STRAVA_ACCESS_TOKEN environment variable")
+    token = CFG.strava_access_token or os.getenv("STRAVA_ACCESS_TOKEN") or ""
+    if not token:
+        # Try refresh flow first
+        token = refresh_access_token()
 
-    headers = {"Authorisation": f"Bearer {CFG.strava_access_token}"}
+    headers = {"Authorization": f"Bearer {token}"}
     params = {"page": page, "per_page": per_page}
     r = requests.get(
         f"{STRAVA_API}/athlete/activities", headers=headers, params=params, timeout=30
     )
 
-    # raise HTTP error if it occurs
-    r.raise_for_status()
+    if r.status_code == 401:
+        # Token likely expired – refresh and retry once
+        token = refresh_access_token()
+        headers = {"Authorization": f"Bearer {token}"}
+        r = requests.get(
+            f"{STRAVA_API}/athlete/activities",
+            headers=headers,
+            params=params,
+            timeout=30,
+        )
 
-    # return decoded json object
+    if r.status_code >= 400:
+        raise RuntimeError(f"Strava API error {r.status_code}: {r.text}")
+
     return r.json()
 
 

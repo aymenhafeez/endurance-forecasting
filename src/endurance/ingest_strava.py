@@ -1,11 +1,41 @@
 import json
+import os
 from datetime import datetime, timezone
+
 import requests
 
-from .db import connect
 from .config import CFG
+from .db import connect
 
 STRAVA_API = "https://www.strava.com/api/v3"
+STRAVA_OAUTH = "https://www.strava.com/oauth/token"
+
+
+def refresh_access_token() -> str:
+    client_id = os.getenv("STRAVA_CLIENT_ID")
+    client_secret = os.getenv("STRAVA_CLIENT_SECRET")
+    refresh_token = os.getenv("STRAVA_REFRESH_TOKEN")
+
+    if not (client_id and client_secret and refresh_token):
+        raise RuntimeError(
+            "Missing Strava OAuth env vars. Set STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, STRAVA_REFRESH_TOKEN."
+        )
+
+    r = requests.post(
+        STRAVA_OAUTH,
+        data={
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+        },
+        timeout=30,
+    )
+    r.raise_for_status()
+    token = r.json().get("access_token")
+    if not token:
+        raise RuntimeError(f"Could not refresh token: {r.text}")
+    return token
 
 
 def fetch_activities(page: int = 1, per_page: int = 200):

@@ -82,7 +82,7 @@ def build_runs():
                 "elev_gain_m": elev,
                 "avg_hr": float(avg_hr) if avg_hr is not None else np.nan,
                 "max_hr": float(max_hr) if max_hr is not None else np.nan,
-                "avg_speed:mps": float(avg_speed) if avg_speed is not None else np.nan,
+                "avg_speed_mps": float(avg_speed) if avg_speed is not None else np.nan,
                 "pace_s_per_km": float(pace) if pd.notna(pace) else np.nan,
                 "trimp": float(tr),
                 "effort_zone": int(z) if z is not None else None,

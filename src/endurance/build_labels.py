@@ -20,6 +20,12 @@ def build_weekly_labels():
         ["week_start", "y_next_week_distance_km"]
     ].copy()
 
+    with connect() as con:
+        con.execute("DELETE FROM lebels_weekly;")
+        labels.to_sql("labels_weekly", con, if_exists="append", index=False)
+
+    print(f"Wrote {len(labels)} weekly labels")
+
 
 if __name__ == "__main__":
     build_weekly_labels()

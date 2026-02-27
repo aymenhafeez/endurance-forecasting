@@ -93,8 +93,7 @@ def build_runs():
     df = df[df["start_date_local"] != ""].copy()
 
     with connect() as con:
-        # replace table entries
-        # not clean, maybe rebuild runs table from scratch
+        con.execute("DELETE FROM runs;")
         df.to_sql("runs", con, if_exists="append", index=False)
 
     print(f"Inserted {len(df)} runs")

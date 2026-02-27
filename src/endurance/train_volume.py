@@ -53,7 +53,8 @@ def train_eval():
 
     def report(name, y_pred):
         mae = mean_absolute_error(y_test, y_pred)
-        rmse = mean_squared_error(y_test, y_pred)
+        mse = mean_squared_error(y_test, y_pred)
+        rmse = np.sqrt(mse)
         within_10 = float(np.mean(np.abs(y_test - y_pred) <= 10.0))
 
         return name, mae, rmse, within_10

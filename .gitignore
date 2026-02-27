@@ -1,1 +1,6 @@
 src/data/*
+.venv/*
+__pycache__/
+src/endurance/__pycache__/
+*.pyc
+.mypy_cache/

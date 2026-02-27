@@ -134,10 +134,48 @@ def build_daily_and_weekly():
         0.0,
     )
 
+    daily_to_store = daily.drop(columns=["week_start"], errors="ignore")
+
+    # maybe not necessary but explicitly define tthe columns to add
+    daily_cols = [
+        "date",
+        "run_count",
+        "distance_km",
+        "time_min",
+        "elev_m",
+        "avg_hr_mean",
+        "trimp",
+        "easy_distance_km",
+        "hard_distance_km",
+        "easy_time_min",
+        "hard_time_min",
+    ]
+    weekly_cols = [
+        "week_start",
+        "distance_km",
+        "time_min",
+        "elev_m",
+        "trimp",
+        "easy_distance_km",
+        "hard_distance_km",
+        "hard_sessions",
+        "dist_7d",
+        "dist_28d",
+        "trimp_7d",
+        "trimp_28d",
+        "acwr",
+        "monotony_7d",
+        "strain_7d",
+        "easy_pct",
+    ]
+
+    daily_to_store = daily_to_store[daily_cols]
+    weekly = weekly[weekly_cols]
+
     with connect() as con:
         con.execute("DELETE FROM daily_features;")
         con.execute("DELETE FROM weekly_features;")
-        daily.to_sql("daily_features", con, if_exists="append", index=False)
+        daily_to_store.to_sql("daily_features", con, if_exists="append", index=False)
         weekly.to_sql("weekly_features", con, if_exists="append", index=False)
 
     print(f"Wrote {len(daily)} daily rows and {len(weekly)} weekly rows.")

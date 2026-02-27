@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 
 import requests
 
-from .config import CFG
 from .db import connect
 
 STRAVA_API = "https://www.strava.com/api/v3"
@@ -39,27 +38,13 @@ def refresh_access_token() -> str:
 
 
 def fetch_activities(page: int = 1, per_page: int = 200):
-    token = CFG.strava_access_token or os.getenv("STRAVA_ACCESS_TOKEN") or ""
-    if not token:
-        # Try refresh flow first
-        token = refresh_access_token()
+    token = refresh_access_token()  # always mint a fresh scoped token
 
     headers = {"Authorization": f"Bearer {token}"}
     params = {"page": page, "per_page": per_page}
     r = requests.get(
         f"{STRAVA_API}/athlete/activities", headers=headers, params=params, timeout=30
     )
-
-    if r.status_code == 401:
-        # Token likely expired – refresh and retry once
-        token = refresh_access_token()
-        headers = {"Authorization": f"Bearer {token}"}
-        r = requests.get(
-            f"{STRAVA_API}/athlete/activities",
-            headers=headers,
-            params=params,
-            timeout=30,
-        )
 
     if r.status_code >= 400:
         raise RuntimeError(f"Strava API error {r.status_code}: {r.text}")

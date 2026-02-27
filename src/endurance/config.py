@@ -8,7 +8,7 @@ class Config:
     db_path: Path = Path("data/endurance.db")
     hr_max: int = 194
 
-    strava_access_token: str | None = os.getenv("STRAVA_ACCESS_TOKEN")
+    # strava_access_token: str | None = os.getenv("STRAVA_ACCESS_TOKEN")
 
 
 CFG = Config()

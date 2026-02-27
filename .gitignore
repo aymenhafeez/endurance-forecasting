@@ -1,4 +1,6 @@
+data/*
 src/data/*
+src/endurance/data/*
 .venv/*
 __pycache__/
 src/endurance/__pycache__/

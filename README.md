@@ -37,10 +37,6 @@ python -m venv .venv
 source .venv/bin/activate(.fish)
 pip install -r requirements.txt
 
-python -m src.endurance.schema
-python -m src.endurance.ingest_strava
-python -m src.endurance.build_runs
-python -m src.endurance.build_features
-python -m src.endurance.build_labels
-python -m src.endurance.train_volume
+cd src/
+python -m endurance
 ```

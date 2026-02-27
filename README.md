@@ -4,9 +4,9 @@ Time-aware modelling of training load and next-week running volume using Strava 
 
 To run go to the [autorisation
 link](https://www.strava.com/oauth/authorize?client_id=CLIENT_ID>&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=activity:read_all)
-but with `CLIENT_ID` filled in. Copy and save the code=<CODE> from the
-authorization link. Set the following environment variables, for example in fish
-shell:
+but with `CLIENT_ID` filled in. Copy and save the code from the `code=<CODE>`
+section in the authorization link. Set the following environment variables, for
+example in fish shell:
 
 ```
 set -x STRAVA_CLIENT_ID <CLIENT_ID>

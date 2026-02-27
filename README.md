@@ -2,9 +2,7 @@
 
 Time-aware modelling of training load and next-week running volume using Strava data.
 
-WIP. Still TODO:  
-* Run script
-* Results visualisation  
+WIP
 
 To run go to the [autorisation
 link](https://www.strava.com/oauth/authorize?client_id=CLIENT_ID>&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=activity:read_all)

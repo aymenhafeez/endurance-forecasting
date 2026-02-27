@@ -33,15 +33,15 @@ def train_eval():
             con,
         )
 
-    X = X.dropna(subset=["y_next_week_distance_km"])
+    X = X.dropna(subset=["y_next_week_distance_km"]).copy()
     if len(X) < 20:
         print("Not enough weeks to train robustly yet.")
         return
 
     # 80/20 data train/test split
     split = int(len(X) * 0.8)
-    train = X.iloc[:split]
-    test = X.iloc[split:]
+    train = X.iloc[:split].copy()
+    test = X.iloc[split:].copy()
 
     y_train = train["y_next_week_distance_km"].values
     y_test = test["y_next_week_distance_km"].values

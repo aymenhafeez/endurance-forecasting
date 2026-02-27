@@ -38,8 +38,9 @@ def train_eval():
         print("Not enough weeks to train robustly yet.")
         return
 
-    # 80/20 data train/test split
-    split = int(len(X) * 0.8)
+    # use max value between splitting at the last 8 weeks vs the last 20%
+    # to make sure the test set isn't too small
+    split = max(len(X) - 8, int(len(X) * 0.8))
     train = X.iloc[:split].copy()
     test = X.iloc[split:].copy()
 

@@ -11,6 +11,10 @@ section in the authorization link. Set the following environment variables, for
 example in fish shell:
 
 ```
+python -m venv .venv
+source .venv/bin/activate(.fish)
+pip install -r requirements.txt
+
 set -x STRAVA_CLIENT_ID <CLIENT_ID>
 set -x STRAVA_CLIENT_SECRET <CLIENT_SECRENT>
 set -x STRAVA_CODE <CODE_FROM_URL>
@@ -31,9 +35,5 @@ set -x STRAVA_REFRESH_TOKEN <REFRESH_TOKEN_FROM_RESPONSE>
 Then run:
 
 ```
-python -m venv .venv
-source .venv/bin/activate(.fish)
-pip install -r requirements.txt
-
 python -m endurance
 ```

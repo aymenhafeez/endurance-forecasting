@@ -1,9 +1,9 @@
-from endurance.schema import init_db
-from endurance.ingest_strava import ingest_all
-from endurance.build_runs import build_runs
-from endurance.build_features import build_daily_and_weekly
-from endurance.build_labels import build_weekly_labels
-from endurance.train_volume import train_eval
+from .schema import init_db
+from .ingest_strava import ingest_all
+from .build_runs import build_runs
+from .build_features import build_daily_and_weekly
+from .build_labels import build_weekly_labels
+from .train_volume import train_eval
 
 
 def main():

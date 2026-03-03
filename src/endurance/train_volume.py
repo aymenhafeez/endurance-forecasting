@@ -87,11 +87,15 @@ def train_eval():
     X_train = train[FEATURES].fillna(0.0).values
     X_test = test[FEATURES].fillna(0.0).values
 
-    model = Pipeline([("scaler", StandardScaler()), ("ridge", Ridge(random_state=42))])
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
+    alphas = [0.01, 0.1, 1.0, 10.0, 100.0]
+    for a in alphas:
+        model = Pipeline(
+            [("scaler", StandardScaler()), ("ridge", Ridge(alpha=a, random_state=42))]
+        )
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
 
-    results.append(report("ridge", y_pred))
+        results.append(report("ridge", y_pred))
 
     res_df = pd.DataFrame(
         results, columns=["model", "MAE_km", "RMSE_km", "within_10km"]

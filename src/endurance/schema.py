@@ -62,7 +62,12 @@ CREATE TABLE IF NOT EXISTS weekly_features (
   acwr REAL,
   monotony_7d REAL,
   strain_7d REAL,
-  easy_pct REAL
+  easy_pct REAL,
+  lag1_distance_km REAL,
+  lag2_distance_km REAL,
+  lag3_distance_km REAL,
+  lag1_trimp REAL,
+  lag2_trimp REAL
 );
 """,
     """

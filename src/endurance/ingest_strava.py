@@ -38,7 +38,8 @@ def refresh_access_token() -> str:
 
 
 def fetch_activities(page: int = 1, per_page: int = 200):
-    token = refresh_access_token()  # always mint a fresh scoped token
+    # always get a fresh token
+    token = refresh_access_token()
 
     headers = {"Authorization": f"Bearer {token}"}
     params = {"page": page, "per_page": per_page}

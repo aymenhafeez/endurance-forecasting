@@ -134,6 +134,13 @@ def build_daily_and_weekly():
         0.0,
     )
 
+    weekly = weekly.sort_values("week_start").reset_index(drop=True)
+    weekly["lag1_distance_km"] = weekly["distance_km"].shift(1)
+    weekly["lag2_distance_km"] = weekly["distance_km"].shift(2)
+    weekly["lag3_distance_km"] = weekly["distance_km"].shift(3)
+    weekly["lag1_trimp"] = weekly["trimp"].shift(1)
+    weekly["lag2_trimp"] = weekly["trimp"].shift(2)
+
     daily_to_store = daily.drop(columns=["week_start"], errors="ignore")
 
     # maybe not necessary but explicitly define tthe columns to add
@@ -167,6 +174,11 @@ def build_daily_and_weekly():
         "monotony_7d",
         "strain_7d",
         "easy_pct",
+        "lag1_distance_km",
+        "lag2_distance_km",
+        "lag3_distance_km",
+        "lag1_trimp",
+        "lag2_trimp",
     ]
 
     daily_to_store = daily_to_store[daily_cols]

@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from .db import connect
 
 FEATURES = [
@@ -18,6 +20,11 @@ FEATURES = [
     "acwr",
     "monotony_7d",
     "strain_7d",
+    "lag1_distance_km",
+    "lag2_distance_km",
+    "lag3_distance_km",
+    "lag1_trimp",
+    "lag2_trimp",
 ]
 
 
@@ -48,9 +55,21 @@ def train_eval():
     y_test = test["y_next_week_distance_km"].values
 
     # baseline predictions
+    # last week distance baseline predictions
     last_week_pred = test["distance_km"].values
-    rolling4_pred = train["distance_km"].rolling(4).mean().iloc[-1]
-    rolling4_pred = np.full_like(y_test, fill_value=float(rolling4_pred))
+
+    # for each test week get the last 4 weeks distance
+    # full series in time order
+    all_dist = X["distance_km"].values
+    rolling4_pred = []
+    for idx in range(split, len(X)):
+        start = max(0, idx - 4)
+        hist = all_dist[start:idx]
+        # if there's fewer than 4 weeks available use whatever exists
+        rolling4_pred.append(
+            float(np.mean(hist)) if len(hist) else float(all_dist[idx - 1])
+        )
+    rolling4_pred = np.array(rolling4_pred, dtype=float)
 
     def report(name, y_pred):
         mae = mean_absolute_error(y_test, y_pred)

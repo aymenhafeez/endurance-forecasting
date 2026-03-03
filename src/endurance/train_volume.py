@@ -87,7 +87,7 @@ def train_eval():
     X_train = train[FEATURES].fillna(0.0).values
     X_test = test[FEATURES].fillna(0.0).values
 
-    model = Ridge(random_state=42)
+    model = Pipeline([("scaler", StandardScaler()), ("ridge", Ridge(random_state=42))])
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
 

@@ -37,3 +37,11 @@ Then run:
 ```
 python -m endurance
 ```
+
+## Streamlit dashboard
+
+To view some of the trends:
+
+```python
+streamlit run dashboard/streamlit_app.py
+```

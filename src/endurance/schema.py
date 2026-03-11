@@ -73,7 +73,10 @@ CREATE TABLE IF NOT EXISTS weekly_features (
     """
 CREATE TABLE IF NOT EXISTS labels_weekly (
   week_start TEXT PRIMARY KEY,
-  y_next_week_distance_km REAL NOT NULL
+  y_risk INTEGER NOT NULL,
+  y_acwr_high INTEGER NOT NULL,
+  y_spike_high INTEGER NOT NULL,
+  y_mono_strain_high INTEGER NOT NULL
 );
 """,
 ]

@@ -1,16 +1,15 @@
-import pandas as pd
 import numpy as np
-
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
-    roc_auc_score,
     average_precision_score,
     classification_report,
     confusion_matrix,
+    roc_auc_score,
 )
 from sklearn.model_selection import TimeSeriesSplit
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 from .db import connect
 
@@ -51,12 +50,10 @@ def train_eval():
     X_test = test[FEATURES].fillna(0.0).values
     y_test = test["y_risk"].values
 
-    model = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            ("clf", LogisticRegression(max_iter=2000, class_weight="balanced")),
-        ]
-    )
+    model = Pipeline([
+        ("scaler", StandardScaler()),
+        ("clf", LogisticRegression(max_iter=2000, class_weight="balanced")),
+    ])
 
     model.fit(X_train, y_train)
     probs = model.predict_proba(X_test)[:, 1]

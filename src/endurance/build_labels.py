@@ -1,5 +1,6 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from .db import connect
 
 ACWR_THR = 1.5

@@ -1,8 +1,10 @@
 import json
-import pandas as pd
+
 import numpy as np
-from .db import connect
+import pandas as pd
+
 from .config import CFG
+from .db import connect
 
 
 def zone_from_avg_hr(avg_hr: float | None) -> int | None:
@@ -71,23 +73,21 @@ def build_runs():
         z = zone_from_avg_hr(avg_hr if avg_hr is not None else np.nan)
         tr = trimp_proxy(moving_min, avg_hr if avg_hr is not None else np.nan)
 
-        rows.append(
-            {
-                "activity_id": int(a["id"]),
-                "start_date_local": date,
-                "start_time_local": time,
-                "distance_m": dist,
-                "moving_time_s": moving,
-                "elapsed_time_s": elapsed,
-                "elev_gain_m": elev,
-                "avg_hr": float(avg_hr) if avg_hr is not None else np.nan,
-                "max_hr": float(max_hr) if max_hr is not None else np.nan,
-                "avg_speed_mps": float(avg_speed) if avg_speed is not None else np.nan,
-                "pace_s_per_km": float(pace) if pd.notna(pace) else np.nan,
-                "trimp": float(tr),
-                "effort_zone": int(z) if z is not None else None,
-            }
-        )
+        rows.append({
+            "activity_id": int(a["id"]),
+            "start_date_local": date,
+            "start_time_local": time,
+            "distance_m": dist,
+            "moving_time_s": moving,
+            "elapsed_time_s": elapsed,
+            "elev_gain_m": elev,
+            "avg_hr": float(avg_hr) if avg_hr is not None else np.nan,
+            "max_hr": float(max_hr) if max_hr is not None else np.nan,
+            "avg_speed_mps": float(avg_speed) if avg_speed is not None else np.nan,
+            "pace_s_per_km": float(pace) if pd.notna(pace) else np.nan,
+            "trimp": float(tr),
+            "effort_zone": int(z) if z is not None else None,
+        })
 
     df = pd.DataFrame(rows)
     df = df[df["start_date_local"] != ""].copy()

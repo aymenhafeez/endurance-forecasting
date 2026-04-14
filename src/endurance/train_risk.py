@@ -138,7 +138,7 @@ def train_eval():
         "test_size": int(len(test)),
     }
 
-    with open(ARTIFACTS_DIR / "rist_metrics.json", "w") as f:
+    with open(ARTIFACTS_DIR / "risk_metrics.json", "w") as f:
         json.dump(metrics, f, indent=2)
 
     holdout_predictions = test[["week_start", "y_risk"]].copy()

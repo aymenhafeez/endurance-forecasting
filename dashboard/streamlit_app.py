@@ -2,26 +2,24 @@ import json
 import sqlite3
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
 import streamlit as st
 
-# -----------------------------
-# Config
-# -----------------------------
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = REPO_ROOT / "data" / "endurance.db"
+ARTIFACTS_DIR = REPO_ROOT / "artifacts"
+MODEL_PATH = ARTIFACTS_DIR / "risk_model.joblib"
+METRICS_PATH = ARTIFACTS_DIR / "risk_metrics.json"
+HOLDOUT_PRED_PATH = ARTIFACTS_DIR / "holdout_predictions.csv"
 
 st.set_page_config(
     page_title="Endurance Forecasting",
-    page_icon="🏃",
     layout="wide",
 )
 
 
-# -----------------------------
-# Helpers
-# -----------------------------
 @st.cache_data
 def run_query(query: str) -> pd.DataFrame:
     con = sqlite3.connect(DB_PATH)
@@ -81,26 +79,28 @@ def load_daily() -> pd.DataFrame:
     )
 
 
-def compute_risk_probability(row: pd.Series) -> float:
-    """
-    Temporary heuristic proxy for the app until you save/load the trained model.
-    This is not the model itself. It gives the UI something sensible to display.
-    """
-    # Conservative, interpretable weighted score
-    acwr = 0.0 if pd.isna(row["acwr"]) else float(row["acwr"])
-    lag1_trimp = 0.0 if pd.isna(row["lag1_trimp"]) else float(row["lag1_trimp"])
-    lag1_distance = (
-        0.0 if pd.isna(row["lag1_distance_km"]) else float(row["lag1_distance_km"])
-    )
+@st.cache_resource
+def load_model():
+    if MODEL_PATH.exists():
+        return joblib.load(MODEL_PATH)
+    return None
 
-    # Simple normalisations to keep score stable
-    acwr_component = min(acwr / 1.5, 2.0)
-    trimp_component = min(lag1_trimp / 400.0, 2.0)
-    dist_component = min(lag1_distance / 100.0, 2.0)
 
-    score = -2.2 + 1.5 * acwr_component + 0.8 * trimp_component + 0.5 * dist_component
-    prob = 1.0 / (1.0 + np.exp(-score))
-    return float(prob)
+@st.cache_data
+def load_metrics():
+    if METRICS_PATH.exists():
+        with open(METRICS_PATH) as f:
+            return json.load(f)
+    return None
+
+
+@st.cache_data
+def load_holdout_predictions():
+    if HOLDOUT_PRED_PATH.exists():
+        df = pd.read_csv(HOLDOUT_PRED_PATH)
+        df["week_start"] = pd.to_datetime(df["week_start"])
+        return df
+    return None
 
 
 def style_risk(prob: float, threshold: float) -> str:
@@ -111,15 +111,17 @@ def format_pct(x: float) -> str:
     return f"{100 * x:.1f}%"
 
 
-# -----------------------------
-# Load data
-# -----------------------------
+# load data
 if not DB_PATH.exists():
     st.error(f"Database not found at {DB_PATH}. Run the pipeline first.")
     st.stop()
 
 weekly = load_weekly()
 daily = load_daily()
+
+model = load_model()
+metrics = load_metrics()
+holdout_predictions = load_holdout_predictions()
 
 if weekly.empty:
     st.error("weekly_features is empty. Run the pipeline first.")
@@ -128,23 +130,30 @@ if weekly.empty:
 weekly["week_start"] = pd.to_datetime(weekly["week_start"])
 daily["date"] = pd.to_datetime(daily["date"])
 
-# Use all rows except the final one if y_risk is null there
+FEATURES = ["lag1_distance_km", "lag1_trimp", "acwr"]
+
+# use all rows except the final one if y_risk is null there
 weekly_valid = weekly.copy()
 
-# Compute temporary app-side risk probabilities
-weekly_valid["risk_probability"] = weekly_valid.apply(compute_risk_probability, axis=1)
+if model is not None:
+    X_app = weekly_valid[FEATURES].fillna(0.0)
+    weekly_valid["risk_probability"] = model.predict_proba(X_app)[:, 1]
+else:
+    weekly_valid["risk_probability"] = np.nan
 
-# -----------------------------
-# Sidebar
-# -----------------------------
+# sidebar
 st.sidebar.title("Endurance Forecasting")
 st.sidebar.caption("Training load and proxy injury-risk monitoring")
+
+default_threshold = 0.5
+if metrics is not None:
+    default_threshold = float(metrics.get("threshold", 0.5))
 
 threshold = st.sidebar.slider(
     "Risk threshold",
     min_value=0.10,
     max_value=0.90,
-    value=0.30,
+    value=float(default_threshold),
     step=0.05,
 )
 
@@ -173,9 +182,7 @@ weekly_view = weekly_valid[
     & (weekly_valid["week_start"] <= end_date)
 ].copy()
 
-# -----------------------------
-# Header
-# -----------------------------
+# header
 st.title("Endurance Forecasting")
 st.caption(
     "Proxy injury-risk modelling from Strava-derived workload features. "
@@ -184,9 +191,7 @@ st.caption(
 
 tabs = st.tabs(["Overview", "Training Load", "Risk Model", "Data Explorer"])
 
-# -----------------------------
-# Overview
-# -----------------------------
+# overview
 with tabs[0]:
     latest = weekly_valid.iloc[-1]
     current_prob = float(latest["risk_probability"])
@@ -213,7 +218,7 @@ with tabs[0]:
         ]
         if not risk_weeks.empty:
             st.caption("Weeks labelled as future high-risk regime")
-            st.dataframe(risk_weeks, use_container_width=True, hide_index=True)
+            st.dataframe(risk_weeks, width="stretch", hide_index=True)
 
     st.subheader("Latest model inputs")
     latest_inputs = pd.DataFrame({
@@ -224,18 +229,18 @@ with tabs[0]:
             latest.get("acwr"),
         ],
     })
-    st.dataframe(latest_inputs, use_container_width=True, hide_index=True)
+    st.dataframe(latest_inputs, width="stretch", hide_index=True)
 
     with st.expander("What this app is showing"):
         st.write(
             "This app tracks training load and estimates the probability of entering a "
-            "high-risk workload regime in the following week. The current MVP uses SQLite-backed "
-            "features from your pipeline and a temporary app-side probability score for display."
+            "high-risk workload regime in the following week. The current MVP uses \
+                    SQLite-backed "
+            "features from your pipeline and a temporary app-side probability score \
+                    for display."
         )
 
-# -----------------------------
-# Training Load
-# -----------------------------
+# training load
 with tabs[1]:
     st.subheader("Weekly training load")
 
@@ -266,22 +271,79 @@ with tabs[1]:
     )
     st.line_chart(display_df)
 
-# -----------------------------
-# Risk Model
-# -----------------------------
+# risk model
 with tabs[2]:
     st.subheader("Risk model view")
 
+    st.markdown("**Predicted risk probability over time**")
     latest_probs = weekly_view[["week_start", "risk_probability"]].set_index(
         "week_start"
     )
-    st.markdown("**Predicted risk probability over time**")
     st.line_chart(latest_probs)
 
     st.markdown("**Current classification at chosen threshold**")
     risk_df = weekly_view[["week_start", "risk_probability"]].copy()
     risk_df["predicted_risk"] = (risk_df["risk_probability"] >= threshold).astype(int)
-    st.dataframe(risk_df.tail(12), use_container_width=True, hide_index=True)
+    st.dataframe(risk_df.tail(12), width="stretch", hide_index=True)
+
+    if metrics is not None:
+        st.markdown("**Model metrics**")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric(
+            "CV ROC-AUC",
+            f"{metrics['cv']['auc_mean']:.3f}"
+            if metrics["cv"]["auc_mean"] is not None
+            else "N/A",
+        )
+        c2.metric(
+            "CV PR-AUC",
+            f"{metrics['cv']['pr_mean']:.3f}"
+            if metrics["cv"]["pr_mean"] is not None
+            else "N/A",
+        )
+        c3.metric(
+            "Holdout ROC-AUC",
+            f"{metrics['holdout']['roc_auc']:.3f}"
+            if metrics["holdout"]["roc_auc"] is not None
+            else "N/A",
+        )
+        c4.metric(
+            "Holdout PR-AUC",
+            f"{metrics['holdout']['pr_auc']:.3f}"
+            if metrics["holdout"]["pr_auc"] is not None
+            else "N/A",
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("**Feature coefficients**")
+            coef_df = (
+                pd
+                .DataFrame({
+                    "feature": list(metrics["coefficients"].keys()),
+                    "coefficient": list(metrics["coefficients"].values()),
+                })
+                .sort_values("coefficient", ascending=False)
+                .reset_index(drop=True)
+            )
+            st.dataframe(coef_df, width="stretch", hide_index=True)
+
+        with col2:
+            st.markdown("**Confusion matrix**")
+            cm = pd.DataFrame(
+                metrics["confusion_matrix"],
+                index=["actual_0", "actual_1"],
+                columns=["pred_0", "pred_1"],
+            )
+            st.dataframe(cm, width="stretch")
+
+    if not holdout_predictions.empty:
+        st.markdown("**Holdout predictions**")
+        holdout_view = holdout_predictions.copy()
+        holdout_view["week_start"] = pd.to_datetime(holdout_view["week_start"])
+        holdout_view = holdout_view.sort_values("week_start")
+        st.dataframe(holdout_view, width="stretch", hide_index=True)
 
     st.markdown("**Label breakdown in dataset**")
     label_counts = pd.DataFrame({
@@ -293,25 +355,24 @@ with tabs[2]:
             int(weekly["y_mono_strain_high"].fillna(0).sum()),
         ],
     })
-    st.dataframe(label_counts, use_container_width=True, hide_index=True)
+    st.dataframe(label_counts, width="stretch", hide_index=True)
 
-    st.markdown("**Model notes**")
-    st.write(
-        "The current training pipeline uses a simple, interpretable feature set: "
-        "`lag1_distance_km`, `lag1_trimp`, and `acwr`. "
-        "This app currently shows a temporary probability proxy for presentation. "
-        "Next step: load the trained logistic regression pipeline and saved metrics directly."
-    )
+    with st.expander("Model details"):
+        st.write(
+            "The current model is a logistic regression classifier trained on a \
+                    compact, interpretable feature set: `lag1_distance_km`, \
+                    `lag1_trimp`, and `acwr`. The objective is to estimate the \
+                    probability of entering a proxy high-risk workload regime in the \
+                    following week."
+        )
 
-# -----------------------------
-# Data Explorer
-# -----------------------------
+# data explorer
 with tabs[3]:
     st.subheader("Weekly feature table")
-    st.dataframe(weekly_view, use_container_width=True, hide_index=True)
+    st.dataframe(weekly_view, width="stretch", hide_index=True)
 
     st.subheader("Daily feature table")
     daily_view = daily[
         (daily["date"] >= start_date) & (daily["date"] <= end_date)
     ].copy()
-    st.dataframe(daily_view, use_container_width=True, hide_index=True)
+    st.dataframe(daily_view, width="stretch", hide_index=True)

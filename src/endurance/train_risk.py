@@ -1,3 +1,7 @@
+import json
+from pathlib import Path
+
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -13,15 +17,17 @@ from sklearn.preprocessing import StandardScaler
 
 from .db import connect
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+ARTIFACTS_DIR = REPO_ROOT / "artifacts"
+ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+
 FEATURES = [
     "lag1_distance_km",
     "lag1_trimp",
-    # "dist_7d",
-    # "dist_28d",
     "acwr",
-    # "monotony_7d",
-    # "strain_7d",
 ]
+
+THRESHOLD = 0.5
 
 
 def train_eval():
@@ -81,28 +87,66 @@ def train_eval():
     print("PR std  :", np.std(cv_prs))
 
     # final model trained on full training block
-    model = Pipeline([
+    final_model = Pipeline([
         ("scaler", StandardScaler()),
         ("clf", LogisticRegression(max_iter=2000, class_weight="balanced")),
     ])
 
-    model.fit(X_train, y_train)
+    final_model.fit(X_train, y_train)
 
-    probs_test = model.predict_proba(X_test)[:, 1]
-    preds_test = (probs_test >= 0.5).astype(int)
+    probs_test = final_model.predict_proba(X_test)[:, 1]
+    preds_test = (probs_test >= THRESHOLD).astype(int)
 
-    print("\nFinal Holdout Performance")
+    holdout_metrics = {}
     if len(np.unique(y_test)) > 1:
-        print("ROC-AUC:", roc_auc_score(y_test, probs_test))
-        print("PR-AUC :", average_precision_score(y_test, probs_test))
+        holdout_metrics["roc_auc"] = float(roc_auc_score(y_test, probs_test))
+        holdout_metrics["pr_auc"] = float(average_precision_score(y_test, probs_test))
+        print("\nFinal holdout preformance")
+        print("ROC-AUC:", holdout_metrics["roc_auc"])
+        print("PR-AUC:", holdout_metrics["pr_auc"])
     else:
-        print("Only one class in test; AUC undefined.")
+        holdout_metrics["roc_auc"] = None
+        holdout_metrics["pr_auc"] = None
+        print("\nOnly one classe in test. AUC undefined")
 
-    print("\nConfusion matrix:\n", confusion_matrix(y_test, preds_test))
-    print(
-        "\nClassification report:\n",
-        classification_report(y_test, preds_test, digits=3),
-    )
+    conf_mat = confusion_matrix(y_test, preds_test)
+    report = classification_report(y_test, preds_test, digits=3, zero_division=0)
+
+    print("\nConfusion matrix:\n", conf_mat)
+    print("\nClassification report:\n", report)
+
+    # save artifacts
+    joblib.dump(final_model, ARTIFACTS_DIR / "risk_model.joblib")
+
+    clf = final_model.named_steps["clf"]
+    coefficients = dict(zip(FEATURES, clf.coef_[0].tolist(), strict=False))
+
+    metrics = {
+        "features": FEATURES,
+        "threshold": THRESHOLD,
+        "cv": {
+            "auc_mean": float(np.mean(cv_aucs)) if cv_aucs else None,
+            "auc_std": float(np.std(cv_aucs)) if cv_aucs else None,
+            "pr_mean": float(np.mean(cv_prs)) if cv_prs else None,
+            "pr_std": float(np.std(cv_prs)) if cv_prs else None,
+        },
+        "holdout": holdout_metrics,
+        "confusion_matrix": conf_mat.tolist(),
+        "classification_report": report,
+        "coefficients": coefficients,
+        "train_size": int(len(train)),
+        "test_size": int(len(test)),
+    }
+
+    with open(ARTIFACTS_DIR / "rist_metrics.json", "w") as f:
+        json.dump(metrics, f, indent=2)
+
+    holdout_predictions = test[["week_start", "y_risk"]].copy()
+    holdout_predictions["predicted_probability"] = probs_test
+    holdout_predictions["predicted_class"] = preds_test
+    holdout_predictions.to_csv(ARTIFACTS_DIR / "holdout_predictions.csv", index=False)
+
+    print(f"\nSaved artifacts to {ARTIFACTS_DIR}")
 
 
 if __name__ == "__main__":

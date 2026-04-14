@@ -1,10 +1,10 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import TimeSeriesSplit
+
 from .db import connect
 
 FEATURES = [
@@ -90,9 +90,10 @@ def train_eval():
 
     alphas = [0.01, 0.1, 1.0, 10.0, 100.0]
     for a in alphas:
-        model = Pipeline(
-            [("scaler", StandardScaler()), ("ridge", Ridge(alpha=a, random_state=42))]
-        )
+        model = Pipeline([
+            ("scaler", StandardScaler()),
+            ("ridge", Ridge(alpha=a, random_state=42)),
+        ])
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
 

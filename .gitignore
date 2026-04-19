@@ -1,4 +1,4 @@
-data/*
+data/*.db
 src/data/*
 src/endurance/data/*
 .venv/*

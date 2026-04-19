@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DB_PATH = REPO_ROOT / "data" / "endurance.db"
+DB_PATH = REPO_ROOT / "data" / "demo_endurance.db"
 ARTIFACTS_DIR = REPO_ROOT / "artifacts"
 MODEL_PATH = ARTIFACTS_DIR / "risk_model.joblib"
 METRICS_PATH = ARTIFACTS_DIR / "risk_metrics.json"

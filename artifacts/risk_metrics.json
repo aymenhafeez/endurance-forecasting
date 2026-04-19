@@ -1,0 +1,36 @@
+{
+  "features": [
+    "lag1_distance_km",
+    "lag1_trimp",
+    "acwr"
+  ],
+  "threshold": 0.5,
+  "cv": {
+    "auc_mean": 0.7067460317460318,
+    "auc_std": 0.17082750298846458,
+    "pr_mean": 0.608111111111111,
+    "pr_std": 0.1753309392879789
+  },
+  "holdout": {
+    "roc_auc": 0.7142857142857143,
+    "pr_auc": 0.3333333333333333
+  },
+  "confusion_matrix": [
+    [
+      6,
+      1
+    ],
+    [
+      1,
+      0
+    ]
+  ],
+  "classification_report": "              precision    recall  f1-score   support\n\n           0      0.857     0.857     0.857         7\n           1      0.000     0.000     0.000         1\n\n    accuracy                          0.750         8\n   macro avg      0.429     0.429     0.429         8\nweighted avg      0.750     0.750     0.750         8\n",
+  "coefficients": {
+    "lag1_distance_km": -0.3143530815213085,
+    "lag1_trimp": -0.28046409930365657,
+    "acwr": 0.38464105872458776
+  },
+  "train_size": 55,
+  "test_size": 8
+}

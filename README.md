@@ -35,7 +35,7 @@ set -x STRAVA_REFRESH_TOKEN <REFRESH_TOKEN_FROM_RESPONSE>
 Then run:
 
 ```
-python -m endurance
+python -m src.endurance
 ```
 
 ## Streamlit dashboard

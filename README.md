@@ -2,8 +2,6 @@
 
 Time-aware modelling of training load and next-week running volume using Strava data.
 
-WIP
-
 To run go to the [autorisation
 link](https://www.strava.com/oauth/authorize?client_id=CLIENT_ID>&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=activity:read_all)
 but with `CLIENT_ID` filled in. Copy and save the code from the `code=<CODE>`
@@ -40,8 +38,15 @@ python -m src.endurance
 
 ## Streamlit dashboard
 
-To view some of the trends:
+View the dashboard [here](https://endurance-forecasting.streamlit.app/). Or to run
+locally:
 
 ```python
 streamlit run dashboard/streamlit_app.py
 ```
+
+### Demo Data
+
+The repository includes a prebuilt SQLite database and model artifacts
+to support the deployed dashboard. This allows the app to run without
+requiring live API access.

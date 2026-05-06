@@ -233,11 +233,9 @@ with tabs[0]:
 
     with st.expander("What this app is showing"):
         st.write(
-            "This app tracks training load and estimates the probability of entering a "
-            "high-risk workload regime in the following week. The current MVP uses \
-                    SQLite-backed "
-            "features from your pipeline and a temporary app-side probability score \
-                    for display."
+            "Tracks training load and estimates the probability of entering a "
+            "high risk workload regime in the following week. The current app uses "
+            "SQLite backed features and a temporary probability score for display."
         )
 
 # training load

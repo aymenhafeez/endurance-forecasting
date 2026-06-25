@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime, timezone
+from typing import Any
 
 import requests
 
@@ -37,7 +38,7 @@ def refresh_access_token() -> str:
     return token
 
 
-def fetch_activities(page: int = 1, per_page: int = 200):
+def fetch_activities(page: int = 1, per_page: int = 200) -> Any:
     # always get a fresh token
     token = refresh_access_token()
 
